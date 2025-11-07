@@ -1,6 +1,5 @@
 <template>
 
-
 <!--Главный div регстрации-->
 <div style="display: flex; width: 600px; height: 500px; background-color: #F8FAFC; border-radius: 15px;  align-items: center; flex-direction: column; border: 5px solid #E2E8F0;">
     <h1>Поле регистрации✅</h1>
@@ -27,8 +26,9 @@
 
 
 <script>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useDataStore } from './Store';
+import { config } from '@/assets/config';
 export default{
     setup(){
         const store = useDataStore()
@@ -66,7 +66,7 @@ export default{
             grecaptcha.ready(() => {
                 const element = document.querySelector("#renderThere")
                 grecaptcha.render(element, {
-                sitekey: "YOUR-SITE-KEY"
+                sitekey: config['SITE-KEY']
             })
             })
 

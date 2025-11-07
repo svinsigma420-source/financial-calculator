@@ -6,11 +6,19 @@ from sqlalchemy import JSON
 from dotenv import load_dotenv
 import os
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///blog.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+path_env_file = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(path_env_file):
+    load_dotenv(path_env_file)
+    secret_key_env = os.getenv("SECRET_KEY")
+
 
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,18 +29,24 @@ class Users(db.Model):
 
 
 
+
+
+
 #Регистрация!!!
 @app.route('/signup_account', methods = ['POST'])
 def signup():
     #парсим
     data = request.get_json()
-    login = data["login"]
-    password = data["password"]    
-    token = data["token"]
+    
+    
+    
+    login = data.get("login")
+    password = data.get("password")
+    token = data.get("token")
     
     #отправляем в пост запросе (аунтефикация сервером по ключу и токена)
     dict = {
-        'secret' : 'YOUR-SECRET-KEY',
+        'secret' : secret_key_env,
         'response' : token
     }
     try:
@@ -48,7 +62,10 @@ def signup():
             if user_valid:
                 return jsonify({"authorization" : "False", "reason" : "Такой пользователь уже существует"})
             else:
-                user = Users(login=login, password=password)
+                #Хеширование пароля
+                hash_password = generate_password_hash(password)
+                user = Users(login=login, password=hash_password)
+                #Сохранение в бд
                 db.session.add(user)
                 db.session.commit()
                 return_data = {
@@ -74,7 +91,8 @@ def login():
 
     #Проверям есть ли пользователя в базе данных
     find_element_in_Users = Users.query.filter_by(login=auth_login).first()
-    if find_element_in_Users and find_element_in_Users.password == auth_password:
+    
+    if find_element_in_Users and check_password_hash(find_element_in_Users.password, auth_password):
         return jsonify({'info_auth' : "True", 'token' : find_element_in_Users.id})
     else:
         return jsonify({'info_auth' : "False", "reason" : "Такого пользователя не существует"})
