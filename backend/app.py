@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import requests
 from sqlalchemy import JSON
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 CORS(app)
