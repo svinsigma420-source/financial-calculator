@@ -17,6 +17,9 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
+    "install": "^0.13.0",
+    "typescript": "^5.9.3",
+    "typescriptnpm": "^1.0.1",
     "vite": "^6.4.1",
     "vite-plugin-vue-devtools": "^7.7.2"
   }

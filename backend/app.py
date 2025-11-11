@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, jsonify
+from flask import Flask, request,  jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import requests
@@ -26,8 +26,6 @@ class Users(db.Model):
     password = db.Column(db.String(16) ,nullable = False)
     incomes = db.Column(JSON, default = 0)
     expenses = db.Column(JSON, default = 0)
-
-
 
 
 
