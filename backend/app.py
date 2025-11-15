@@ -26,6 +26,8 @@ class Users(db.Model):
     password = db.Column(db.String(255) ,nullable = False)
     incomes = db.Column(JSON, default = 0) 
 
+
+class SignUp:
     
     @staticmethod
     def validation_password(some_password):
@@ -35,6 +37,7 @@ class Users(db.Model):
         }
         digit_boolean = []
         alpha_boolean = []
+        
         for letter in some_password:
             digit_boolean.append(letter.isdigit()) 
             alpha_boolean.append(letter.isalpha())
@@ -50,86 +53,90 @@ class Users(db.Model):
         if not any(digit_boolean):
             dict_password_error["error"] = True
             dict_password_error["reson_errors"].append("пароль должен содержать цифры")
-        
 
         return dict_password_error
+    
+    @staticmethod
+    def signup(data):
+        login = data.get("login")
+        password = data.get("password")
+        captcha_token = data.get("token")
+        dict_validate = SignUp.validation_password(some_password=password)
+
+        if not dict_validate["error"]:
+            #отправляем в пост запросе (аунтефикация сервером по ключу и токену)
+            dict = {
+                'secret' : secret_key_env,
+                'response' : captcha_token
+            }
+            try:
+                response = requests.post("https://www.google.com/recaptcha/api/siteverify",data=dict)
+                response.raise_for_status()
+                json_success_data = response.json()
+                success_data = json_success_data.get("success", False)
+
+                if success_data:
+                    #Проверка на существующий аккаунт
+                    user_valid = Users.query.filter_by(login=login).first()
+
+                    if user_valid:
+                        return jsonify({"authorization" : "False", "reason" : "Такой пользователь уже существует"})
+                    else:
+                        #Хеширование пароля
+                        hash_password = generate_password_hash(password)
+                        user = Users(login=login, password=hash_password)
+                        #Сохранение в бд
+                        db.session.add(user)
+                        db.session.commit()
+                        return_data = {
+                            "token_from_my_server" : user.id,
+                            "authorization" : "True"
+                        }
+                        return jsonify(return_data)
+                else:
+                    return jsonify({"authorization" : "False", "reason" : "Капча не пройдена"})
+
+            except Exception as e:
+                print(f"ошибка {e}")
+                return jsonify({"authorization" : "False", "reason" : "Ошибка при запросе на сервере" })
+        else:
+            fstring = f"{', '.join(dict_validate['reson_errors'])} "
+            return jsonify({ "authorization" : "False", "reason":  fstring  })   
+            
+    
         
  
+
+class Login:
+    @staticmethod
+    def login(auth_data):
+        auth_login = auth_data["auth_l"]
+        auth_password = auth_data["auth_p"]
+
+
+        #Проверям есть ли пользователя в базе данных
+        find_element_in_Users = Users.query.filter_by(login=auth_login).first()
+        
+        if find_element_in_Users and check_password_hash(find_element_in_Users.password, auth_password):
+            return jsonify({'info_auth' : "True", 'token' : find_element_in_Users.id})
+        else:
+            return jsonify({'info_auth' : "False", "reason" : "Такого пользователя не существует"})
+
+
+
 
 
 #Регистрация!!!
 @app.route('/signup_account', methods = ['POST'])
 def signup():
-    #парсим
     data = request.get_json()
-    
-    obj_singup = Users(operation="signup", data=data)
-    
-    
-    login = data.get("login")
-    password = data.get("password")
-    captcha_token = data.get("token")
-    dict_validate = Users.validation_password(some_password=password)
-
-
-
-    if not dict_validate["error"]:
-        #отправляем в пост запросе (аунтефикация сервером по ключу и токена)
-        dict = {
-            'secret' : secret_key_env,
-            'response' : captcha_token
-        }
-        try:
-            response = requests.post("https://www.google.com/recaptcha/api/siteverify",data=dict)
-            response.raise_for_status()
-            json_success_data = response.json()
-            success_data = json_success_data.get("success", False)
-
-            if success_data:
-                #Проверка на существующий аккаунт
-                user_valid = Users.query.filter_by(login=login).first()
-
-                if user_valid:
-                    return jsonify({"authorization" : "False", "reason" : "Такой пользователь уже существует"})
-                else:
-                    #Хеширование пароля
-                    hash_password = generate_password_hash(password)
-                    user = Users(login=login, password=hash_password)
-                    #Сохранение в бд
-                    db.session.add(user)
-                    db.session.commit()
-                    return_data = {
-                        "token_from_my_server" : user.id,
-                        "authorization" : "True"
-                    }
-                    return jsonify(return_data)
-            else:
-                return jsonify({"authorization" : "False", "reason" : "Капча не пройдена"})
-
-        except:
-            return jsonify({"authorization" : "False", "reason" : "Ошибка при запросе на сервере" })
-    else:
-        fstring = f"{', '.join(dict_validate['reson_errors'])} "
-        return jsonify({ "authorization" : "False", "reason":  fstring  })   
-            
+    return SignUp.signup(data=data)
 
 #Авторизация!!! 
 @app.route("/login_account", methods = ["POST"])
 def login():
-    #Парсим
     auth_data = request.get_json()
-    auth_login = auth_data["auth_l"]
-    auth_password = auth_data["auth_p"]
-
-
-    #Проверям есть ли пользователя в базе данных
-    find_element_in_Users = Users.query.filter_by(login=auth_login).first()
-    
-    if find_element_in_Users and check_password_hash(find_element_in_Users.password, auth_password):
-        return jsonify({'info_auth' : "True", 'token' : find_element_in_Users.id})
-    else:
-        return jsonify({'info_auth' : "False", "reason" : "Такого пользователя не существует"})
-
+    return Login.login(auth_data=auth_data)
     
     
       
@@ -147,8 +154,8 @@ def analytics():
 
             db.session.commit()
             print("Данные успешно записанны в бд")
-        except:
-            print("Ошибка на маршруте /analytics")
+        except Exception as e:
+            print("Ошибка на маршруте /analytics: {e}")
     
 @app.route("/analytics_page" , methods = ["POST"])
 def analytics_page():
@@ -160,8 +167,8 @@ def analytics_page():
                 "incomes" : user.incomes,
                 "expenses" : user.expenses
         })
-    except:
-        print("Ошибка на маршруте /analytics_page")
+    except Exception as e:
+        print(f"Ошибка на маршруте /analytics_page: {e}")
 
 
 with app.app_context():
