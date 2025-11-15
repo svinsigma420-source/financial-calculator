@@ -28,7 +28,7 @@
 <script>
 import { ref, watch, onMounted } from 'vue';
 import { useDataStore } from './Store';
-import { config } from 'config.js';
+import { config } from '/config.js';
 export default{
     setup(){
         const store = useDataStore()

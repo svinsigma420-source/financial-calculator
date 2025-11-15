@@ -9,12 +9,14 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
-    
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["dom", "esnext"],
-    "types": ["vite/client"]  
-  }
+    "types": ["vite/client"],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
