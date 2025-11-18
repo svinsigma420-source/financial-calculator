@@ -63,45 +63,48 @@ class SignUp:
         captcha_token = data.get("token")
         dict_validate = SignUp.validation_password(some_password=password)
 
-        if not dict_validate["error"]:
-            #отправляем в пост запросе (аунтефикация сервером по ключу и токену)
-            dict = {
-                'secret' : secret_key_env,
-                'response' : captcha_token
-            }
-            try:
-                response = requests.post("https://www.google.com/recaptcha/api/siteverify",data=dict)
-                response.raise_for_status()
-                json_success_data = response.json()
-                success_data = json_success_data.get("success", False)
+        if password and login and captcha_token:
+            if not dict_validate["error"]:
+                #отправляем в пост запросе (аунтефикация сервером по ключу и токену)
+                dict = {
+                    'secret' : secret_key_env,
+                    'response' : captcha_token
+                }
+                try:
+                    response = requests.post("https://www.google.com/recaptcha/api/siteverify",data=dict)
+                    response.raise_for_status()
+                    json_success_data = response.json()
+                    success_data = json_success_data.get("success", False)
 
-                if success_data:
-                    #Проверка на существующий аккаунт
-                    user_valid = Users.query.filter_by(login=login).first()
+                    if success_data:
+                        #Проверка на существующий аккаунт
+                        user_valid = Users.query.filter_by(login=login).first()
 
-                    if user_valid:
-                        return jsonify({"authorization" : "False", "reason" : "Такой пользователь уже существует"})
+                        if user_valid:
+                            return jsonify({"authorization" : "False", "reason" : "Такой пользователь уже существует"})
+                        else:
+                            #Хеширование пароля
+                            hash_password = generate_password_hash(password)
+                            user = Users(login=login, password=hash_password)
+                            #Сохранение в бд
+                            db.session.add(user)
+                            db.session.commit()
+                            return_data = {
+                                "token_from_my_server" : user.id,
+                                "authorization" : "True"
+                            }
+                            return jsonify(return_data)
                     else:
-                        #Хеширование пароля
-                        hash_password = generate_password_hash(password)
-                        user = Users(login=login, password=hash_password)
-                        #Сохранение в бд
-                        db.session.add(user)
-                        db.session.commit()
-                        return_data = {
-                            "token_from_my_server" : user.id,
-                            "authorization" : "True"
-                        }
-                        return jsonify(return_data)
-                else:
-                    return jsonify({"authorization" : "False", "reason" : "Капча не пройдена"})
+                        return jsonify({"authorization" : "False", "reason" : "Капча не пройдена"})
 
-            except Exception as e:
-                print(f"ошибка {e}")
-                return jsonify({"authorization" : "False", "reason" : "Ошибка при запросе на сервере" })
+                except Exception as e:
+                    print(f"ошибка {e}")
+                    return jsonify({"authorization" : "False", "reason" : "Ошибка при запросе на сервере" })
+            else:
+                fstring = f"{', '.join(dict_validate['reson_errors'])} "
+                return jsonify({ "authorization" : "False", "reason":  fstring  })
         else:
-            fstring = f"{', '.join(dict_validate['reson_errors'])} "
-            return jsonify({ "authorization" : "False", "reason":  fstring  })   
+            return jsonify({ "authorization" : "False", "reason":  "заполните все поля"  }) 
             
     
         
@@ -114,13 +117,16 @@ class Login:
         auth_password = auth_data["auth_p"]
 
 
-        #Проверям есть ли пользователя в базе данных
-        find_element_in_Users = Users.query.filter_by(login=auth_login).first()
-        
-        if find_element_in_Users and check_password_hash(find_element_in_Users.password, auth_password):
-            return jsonify({'info_auth' : "True", 'token' : find_element_in_Users.id})
+        if auth_login and auth_password:
+            #Проверям есть ли пользователя в базе данных
+            find_element_in_Users = Users.query.filter_by(login=auth_login).first()
+            
+            if find_element_in_Users and check_password_hash(find_element_in_Users.password, auth_password):
+                return jsonify({'info_auth' : "True", 'token' : find_element_in_Users.id})
+            else:
+                return jsonify({'info_auth' : "False", "reason" : "такого пользователя не существует"})
         else:
-            return jsonify({'info_auth' : "False", "reason" : "Такого пользователя не существует"})
+            return jsonify({'info_auth' : "False", "reason" : "заполните все поля"})
 
 
 

@@ -78,9 +78,7 @@ export default{
 
         const signupFunc = async () => {
             const token = grecaptcha.getResponse()
-            if(localStorage.getItem("token") === null){
-                    if(token && userLogin.value && userPassword.value){
-                
+            if(localStorage.getItem("token") === null){     
                 try{
                     const obj = {
                         "token" : token,
@@ -93,22 +91,18 @@ export default{
                         body : JSON.stringify(obj)
                     })
                     const data = await response.json()
-                    if (data["authorization"] === "True"){
+                    if (data["authorization"] === "True" && response.ok){
                         alert("Регистрация прошла успешно")
                         saveToken(data["token_from_my_server"])
                         store.saveChangeToken()
                         
                     }else{
-                        alert(`Возникла ошибка во время регистрации: ${data["reason"]}`)
+                        alert(`Ошибка: ${data["reason"]}`)
                     }
                     
                 }catch(err){
                     console.error(err)
                 }
-            }else{
-                error.value = "Заполните все поля и пройдите капчю"
-            }
-
                 }else{
                     alert("Сначала выйдите из текущего аккаунта, чтобы создать или войти в другой.")
                 }

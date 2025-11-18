@@ -46,7 +46,6 @@ export default{
         
         const login = async () => {
             if(localStorage.getItem("token") === null){
-                     if( auth_login.value && auth_password.value){
                 try{
                     //Составляем запрос 
                     const auth_obj = {
@@ -77,9 +76,6 @@ export default{
                 }catch(err){
                     console.error(err)
                 }
-            }else{ 
-                error.value = "Заполните все поля"
-                        }
                 }else{
                     alert("Сначала выйдите из текущего аккаунта, чтобы создать или войти в другой.")
                         }
