@@ -12,7 +12,8 @@ Backend: Python, Flask, SQLAlchemy, SQLite
 Frontend: Vue 3, Pinia, Vue Router, Vite
 
 
-Быстрый старт bash:
+Быстрый старт:
+
 cd backend
 pip install -r requirements.txt
 python run.py
@@ -22,4 +23,16 @@ npm install
 npm run dev
 
 
-ВАЖНО ЗАМЕНИТЬ YOUR_SITE_KEY И YOUR_SECRET_KEY на ваши валдиные ключи полученные на официальном сайте https://developers.google.com/recaptcha?hl=en(Вид капчи: reCAPTCHA v2 "I'm not a robot")
+
+ВАЖНО ЗАМЕНИТЬ YOUR_SITE_KEY(создать файл config.js и экспортировать из него ваш сайт-ключ:
+
+export const config = {"SITE-KEY" : "PUT_KEY"}) 
+
+И YOUR_SECRET_KEY(создать файл с названием .env и написать:
+
+SECRET_KEY=PUT_SECRET_KEY
+
+) 
+
+
+на ваши валдиные ключи полученные на официальном сайте https://developers.google.com/recaptcha?hl=en(Вид капчи: reCAPTCHA v2 "I'm not a robot")
