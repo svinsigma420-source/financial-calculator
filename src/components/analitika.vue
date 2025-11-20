@@ -39,44 +39,43 @@ export default{
         const sum_incomes = ref(0)
         onMounted(async()=> {
             try{
-                if(localStorage.getItem("token") !== null || false){
+                if(localStorage.getItem("token") !== null ){
                     const response = await fetch("http://localhost:5000/analytics_page", {
-                method: "POST",
-                headers: {"Content-Type" : "application/json", "Authorization" : `Bearer ${localStorage.getItem("token")}`}
-            })
+                    method: "POST",
+                    headers: {"Content-Type" : "application/json", "Authorization" : `Bearer ${localStorage.getItem("token")}`}
+                })
             const data = await response.json()
-            for(var element of data["incomes"]){
+            
+            if (Array.isArray(data.incomes) && Array.isArray(data.expenses)){
+                for(var element of data["incomes"]){
+                    sum_incomes.value += element
+                    array_all_pays.value.push(element)
+                }
+
+                for(var element of data["expenses"]){
+                    sum_expenses.value += element["value"]
+                    array_all_spends.value.push(element["value"])
+                }
+            } else {
+                console.error(`С сервера приходит не массив, а ${data["expenses"]} и ${data["incomes"]}`)
+            }
+
+        } else {
+            for(var element of array_pay.value){
                 sum_incomes.value += element
                 array_all_pays.value.push(element)
             }
 
-            for(var element of data["expenses"]){
-                sum_expenses.value += element["value"]
+            for(var element of array_spend.value){
+                sum_expenses.value += element.value
                 array_all_spends.value.push(element["value"])
             }
+        }
 
-                }else{
-                    for(var element of array_pay.value){
-                        sum_incomes.value += element
-                        array_all_pays.value.push(element)
-
-                    for(var element of array_spend.value){
-                        sum_expenses.value += element.value
-                        array_all_spends.value.push(element["value"])
-                    }
-
-                }
-
-            }
             }catch(err){
                 console.error(`ошибка в analitka.vue ${err}`)
             }
-
-
-
         }
-
-
     )
 
     const profit = computed(() => {
@@ -110,7 +109,6 @@ export default{
         }
     })
 
-
     const max_category = computed(() => {
         const spend_food = ref(0)
         const spend_live = ref(0)
@@ -136,13 +134,14 @@ export default{
             }
         
 
-            const category_value_array = [{"category" : "Еда", "value" : spend_food.value},
+            const category_value_array = [
+        {"category" : "Еда", "value" : spend_food.value},
         {"category" : "Жилье", "value" : spend_live.value},
         {"category" : "Одежда", "value" : spend_wear.value},
         {"category" : "Транспорт", "value" : spend_transport.value},
-        {"category" : "Еда", "value" : spend_entertainment.value},
-        {"category" : "Еда", "value" : spend_study.value},
-        {"category" : "Еда", "value" : spend_other.value}
+        {"category" : "Развлечения", "value" : spend_entertainment.value},
+        {"category" : "Образование", "value" : spend_study.value},
+        {"category" : "Другое", "value" : spend_other.value}
     ]
 
         
@@ -171,4 +170,3 @@ export default{
 }
 
 </script>
-

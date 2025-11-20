@@ -24,7 +24,8 @@ class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(255), nullable = False )
     password = db.Column(db.String(255) ,nullable = False)
-    incomes = db.Column(JSON, default = 0) 
+    incomes = db.Column(JSON, default = [])
+    expenses = db.Column(JSON, default = [])
 
 
 class SignUp:
@@ -174,8 +175,7 @@ def analytics_page():
                 "expenses" : user.expenses
         })
     except Exception as e:
-        print(f"Ошибка на маршруте /analytics_page: {e}")
-
+        return jsonify(f"Ошибка на маршруте /analytics_page: {e}")
 
 with app.app_context():
     db.create_all()  

@@ -61,30 +61,41 @@
 </template>
 
 <script>
-import { onMounted, ref } from "vue"
+import { onMounted} from "vue"
 import Buttons from "./Buttons.vue"
 import {useDataStore} from "./Store"
 import { storeToRefs } from 'pinia' // Импортируем storeToRefs
 
 export default {
   components: {Buttons},
-  setup() {
+  
+  setup() {  
     const store = useDataStore()
+    
+    const { 
+      pay,
+      array_pay,
+      array_spend,
+      input,
+      select_categoty
+    } = storeToRefs(store)
+    
+    
     
     onMounted( async () => {
       console.log("data page mounted")
       try{
-        const token = ref(localStorage.getItem("token"))
-        if (token.value !== null || false ){
+        const token = localStorage.getItem("token")
+        if (token){
           const response = await fetch("http://localhost:5000/analytics_page", {
           method: "POST",
           headers : {"Content-type" : 'application/json', "Authorization": `Bearer ${localStorage.getItem("token")}`}
         })
         
       const data = await response.json()
-      if(data["incomes"] !== 0 && data["expenses" !== 0]){
-        store.array_pay.value = data["incomes"]
-        store.array_spend.value = data["expenses"]
+      if(response.ok && data["incomes"] && data["expenses"]){
+        array_pay.value = data["incomes"]
+        array_spend.value = data["expenses"]
       }
       }
       
@@ -93,13 +104,6 @@ export default {
       }
     })
 
-    const { 
-      pay,
-      array_pay,
-      array_spend,
-      input,
-      select_categoty
-    } = storeToRefs(store)
     
     const {
       add_pay,
